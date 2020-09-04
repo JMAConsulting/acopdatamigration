@@ -191,6 +191,8 @@ LEFT JOIN civicrm_option_value pov ON pov.label = if(p.Title = 'Miss', 'Miss.', 
 LEFT JOIN civicrm_option_value sov ON sov.label = if(p.Suffix = 'Sr', 'Sr.', if(p.Suffix = 'Jr', 'Jr.', p.Suffix)) AND sov.option_group_id = 7
 WHERE IndividualNumber = 1;
 
+DROP TALBE org_data;                                                                               
+                                                                                
 CREATE TEMPORARY TABLE ind_data
 SELECT cc.id as entity_id, if(p.IndDateCredentials != '', p.IndDateCredentials, NULL) as date_credentialed_13, if(p.IndAnniversary != '', p.IndAnniversary, NULL) as anniversary_14, if(p.IndOrdained != '', p.IndOrdained, NULL) as ordained_15, if(p.IndCommenced != '', p.IndCommenced, NULL) as commenced_16, if(p.IndApplicationDate != '', p.IndApplicationDate, NULL) as application_date_17
 FROM acop_data.People p
@@ -226,7 +228,7 @@ FROM ind_address;
 
 DROP TABLE ind_address;
 
-CREATE TABLE ind_emails
+CREATE TEMPORARY TABLE ind_emails
 SELECT cc.id as contact_id, e.EmailAddr as email, 3 as location_type_id, 1 as is_primary
 FROM acop_data.People p
 INNER JOIN civicrm_contact cc ON cc.IndividualID = p.IndividualID
@@ -366,6 +368,7 @@ SELECT contact_id, phone, phone_type_id, location_type_id, is_primary
 FROM ind_phones;
 
 DROP TABLE ind_phones;
+                                                                                
 /*Process all the Spouses*/
 INSERT INTO civicrm_contact (last_name, first_name, middle_name, nick_name, gender_id, birth_date, prefix_id, suffix_id, contact_type, IndividualID, sort_name, display_name)
 SELECT p.LastName, p.FirstName, if(p.MiddleName != '', p.MiddleName, NULL), if(p.GoesByName != '', p.GoesByName, NULL), gov.value, if(p.DateofBirth != '', DATE_FORMAT(STR_TO_DATE(p.DateOfBirth, '%m/%d/%Y'), '%Y-%m-%d'), NULL), pov.value, sov.value, 'Individual', p.IndividualID, CONCAT(p.LastName, ', ', p.FirstName), CONCAT(p.Title, ' ', p.FirstName, ' ', p.LastName, ' ', p.Suffix)
@@ -518,6 +521,7 @@ SELECT contact_id, email, location_type_id, is_primary
 FROM ind_emails;
 
 DROP TABLE ind_emails;
+                                                                                
 /* Process Children */
 INSERT INTO civicrm_contact (last_name, first_name, middle_name, nick_name, gender_id, birth_date, prefix_id, suffix_id, contact_type, IndividualID, sort_name, display_name)
 SELECT p.LastName, p.FirstName, if(p.MiddleName != '', p.MiddleName, NULL), if(p.GoesByName != '', p.GoesByName, NULL), gov.value, if(p.DateofBirth != '', DATE_FORMAT(STR_TO_DATE(p.DateOfBirth, '%m/%d/%Y'), '%Y-%m-%d'), NULL), pov.value, sov.value, 'Individual', p.IndividualID, CONCAT(p.LastName, ', ', p.FirstName), CONCAT(p.Title, ' ', p.FirstName, ' ', p.LastName, ' ', p.Suffix)
@@ -601,6 +605,7 @@ INNER JOIN acop_data.Emails e ON e.FamilyNumber = p.FamilyNumber AND e.Individua
 WHERE p.IndividualNumber = 21;
 
 DROP TABLE ind_emails;
+                                                                                
 /*Process other contacts*/
 INSERT INTO civicrm_contact (last_name, first_name, middle_name, nick_name, gender_id, birth_date, prefix_id, suffix_id, contact_type, IndividualID, sort_name, display_name)
 SELECT p.LastName, p.FirstName, if(p.MiddleName != '', p.MiddleName, NULL), if(p.GoesByName != '', p.GoesByName, NULL), gov.value, if(p.DateofBirth != '', DATE_FORMAT(STR_TO_DATE(p.DateOfBirth, '%m/%d/%Y'), '%Y-%m-%d'), NULL), pov.value, sov.value, 'Individual', p.IndividualID, CONCAT(p.LastName, ', ', p.FirstName), CONCAT(p.Title, ' ', p.FirstName, ' ', p.LastName, ' ', p.Suffix)
