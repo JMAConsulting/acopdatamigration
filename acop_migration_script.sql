@@ -156,7 +156,7 @@ FROM org_phones;
 DROP TABLE org_phones;
 /*Process Faxes*/
 CREATE TEMPORARY TABLE org_phones
-SELECT cc.id as contact_id, p.Phone as phone, 1 as phone_type_id, 4 as location_type_id, 1 as is_primary
+SELECT cc.id as contact_id, p.Phone as phone, 3 as phone_type_id, 4 as location_type_id, 1 as is_primary
 FROM acop_org_data.Orgs o
 INNER JOIN civicrm_contact cc ON cc.OrgID = o.OrgId 
 INNER JOIN acop_org_data.Phones p ON p.OrgID = o.OrgID
@@ -183,8 +183,8 @@ INSERT INTO civicrm_value_organization__3 (entity_id, envelope_number_9, cra_reg
 SELECT entity_id, envelope_number_9, cra_registration_number_10, cra_registration_effective_date_12 FROM org_data;
 
 /*Process Individuals / start with the head of households*/
-INSERT INTO civicrm_contact (last_name, first_name, middle_name, nick_name, gender_id, birth_date, prefix_id, suffix_id, contact_type, IndividualID, sort_name, display_name)
-SELECT p.LastName, p.FirstName, if(p.MiddleName != '', p.MiddleName, NULL), if(p.GoesByName != '', p.GoesByName, NULL), gov.value, if(p.DateofBirth != '', DATE_FORMAT(STR_TO_DATE(p.DateOfBirth, '%m/%d/%Y'), '%Y-%m-%d'), NULL), pov.value, sov.value, 'Individual', p.IndividualID, CONCAT(p.LastName, ', ', p.FirstName), CONCAT(p.Title, ' ', p.FirstName, ' ', p.LastName, ' ', p.Suffix)
+INSERT INTO civicrm_contact (last_name, first_name, middle_name, nick_name, gender_id, birth_date, prefix_id, suffix_id, contact_type, IndividualID, sort_name, display_name, is_deceased)
+SELECT p.LastName, p.FirstName, if(p.MiddleName != '', p.MiddleName, NULL), if(p.GoesByName != '', p.GoesByName, NULL), gov.value, if(p.DateofBirth != '', DATE_FORMAT(STR_TO_DATE(p.DateOfBirth, '%m/%d/%Y'), '%Y-%m-%d'), NULL), pov.value, sov.value, 'Individual', p.IndividualID, CONCAT(p.LastName, ', ', p.FirstName), CONCAT(p.Title, ' ', p.FirstName, ' ', p.LastName, ' ', p.Suffix), if (p.MemberStatus == 'Deceased', 1, 0)
 FROM acop_data.People p
 LEFT JOIN civicrm_option_value gov ON gov.label = p.Gender AND gov.option_group_id = 3
 LEFT JOIN civicrm_option_value pov ON pov.label = if(p.Title = 'Miss', 'Miss.', if(p.Title = 'Pastor', 'Pastor.', p.Title)) AND pov.option_group_id = 6
@@ -205,12 +205,12 @@ FROM ind_data;
 DROP TABLE ind_data;
 
 CREATE TEMPORARY TABLE ind_data
-SELECT cc.id as entity_id, if(p.IndEducation != '', p.IndEducation, NULL) as education_completed_20, 1 as head_of_family_21, IF(p.IndStatus != '', p.IndStatus, NULL) as status_24, IF(p.IndMarriageRegistration != '', p.IndMarriageRegistration, NULL) as marriage_registration_25
+SELECT cc.id as entity_id, if(p.IndEducation != '', p.IndEducation, NULL) as education_completed_20, 1 as head_of_family_21, IF(p.IndStatus != '', p.IndStatus, NULL) as status_24, IF(p.IndMarriageRegistration != '', p.IndMarriageRegistration, NULL) as marriage_registration_25, if(p.MaritalStatus != '', p.MaritalStatus, NULL) as marital_status_43, IF(p.IndVitalStats_ != '', p.IndVitalStats_, NULL) as marriage_registration_number_44
 FROM acop_data.People p
 INNER JOIN civicrm_contact cc On cc.IndividualID = p.IndividualID;
 
-INSERT INTO civicrm_value_individual_ad_6 (entity_id, education_completed_20, head_of_family_21, status_24, marriage_registration_25) 
-SELECT entity_id, education_completed_20, head_of_family_21, status_24, marriage_registration_25
+INSERT INTO civicrm_value_individual_ad_6 (entity_id, education_completed_20, head_of_family_21, status_24, marriage_registration_25, marital_status_43, marriage_registration_number_44) 
+SELECT entity_id, education_completed_20, head_of_family_21, status_24, marriage_registration_25, marital_status_43, marriage_registration_number_44
 FROM ind_data;
 
 DROP TABLE ind_data;
@@ -370,8 +370,8 @@ FROM ind_phones;
 DROP TABLE ind_phones;
                                                                                 
 /*Process all the Spouses*/
-INSERT INTO civicrm_contact (last_name, first_name, middle_name, nick_name, gender_id, birth_date, prefix_id, suffix_id, contact_type, IndividualID, sort_name, display_name)
-SELECT p.LastName, p.FirstName, if(p.MiddleName != '', p.MiddleName, NULL), if(p.GoesByName != '', p.GoesByName, NULL), gov.value, if(p.DateofBirth != '', DATE_FORMAT(STR_TO_DATE(p.DateOfBirth, '%m/%d/%Y'), '%Y-%m-%d'), NULL), pov.value, sov.value, 'Individual', p.IndividualID, CONCAT(p.LastName, ', ', p.FirstName), CONCAT(p.Title, ' ', p.FirstName, ' ', p.LastName, ' ', p.Suffix)
+INSERT INTO civicrm_contact (last_name, first_name, middle_name, nick_name, gender_id, birth_date, prefix_id, suffix_id, contact_type, IndividualID, sort_name, display_name, is_deceased)
+SELECT p.LastName, p.FirstName, if(p.MiddleName != '', p.MiddleName, NULL), if(p.GoesByName != '', p.GoesByName, NULL), gov.value, if(p.DateofBirth != '', DATE_FORMAT(STR_TO_DATE(p.DateOfBirth, '%m/%d/%Y'), '%Y-%m-%d'), NULL), pov.value, sov.value, 'Individual', p.IndividualID, CONCAT(p.LastName, ', ', p.FirstName), CONCAT(p.Title, ' ', p.FirstName, ' ', p.LastName, ' ', p.Suffix), if (p.MemberStatus == 'Deceased', 1, 0)
 FROM acop_data.People p
 LEFT JOIN civicrm_option_value gov ON gov.label = p.Gender AND gov.option_group_id = 3
 LEFT JOIN civicrm_option_value pov ON pov.label = if(p.Title = 'Miss', 'Miss.', if(p.Title = 'Pastor', 'Pastor.', p.Title)) AND pov.option_group_id = 6
@@ -399,13 +399,13 @@ FROM ind_data;
 DROP TABLE ind_data;
 
 CREATE TEMPORARY TABLE ind_data
-SELECT cc.id as entity_id, if(p.IndEducation != '', p.IndEducation, NULL) as education_completed_20, 0 as head_of_family_21, IF(p.IndStatus != '', p.IndStatus, NULL) as status_24, IF(p.IndMarriageRegistration != '', p.IndMarriageRegistration, NULL) as marriage_registration_25
+SELECT cc.id as entity_id, if(p.IndEducation != '', p.IndEducation, NULL) as education_completed_20, 0 as head_of_family_21, IF(p.IndStatus != '', p.IndStatus, NULL) as status_24, IF(p.IndMarriageRegistration != '', p.IndMarriageRegistration, NULL) as marriage_registration_25, if(p.MaritalStatus != '', p.MaritalStatus, NULL) as marital_status_43, IF(p.IndVitalStats_ != '', p.IndVitalStats_, NULL) as marriage_registration_number_44
 FROM acop_data.People p
 INNER JOIN civicrm_contact cc On cc.IndividualID = p.IndividualID
 WHERE p.IndividualNumber = 11;
 
-INSERT INTO civicrm_value_individual_ad_6 (entity_id, education_completed_20, head_of_family_21, status_24, marriage_registration_25) 
-SELECT entity_id, education_completed_20, head_of_family_21, status_24, marriage_registration_25
+INSERT INTO civicrm_value_individual_ad_6 (entity_id, education_completed_20, head_of_family_21, status_24, marriage_registration_25, marital_status_43, marriage_registration_number_44)
+SELECT entity_id, education_completed_20, head_of_family_21, status_24, marriage_registration_25, marital_status_43, marriage_registration_number_44
 FROM ind_data;
 
 DROP TABLE ind_data;
@@ -523,8 +523,8 @@ FROM ind_emails;
 DROP TABLE ind_emails;
                                                                                 
 /* Process Children */
-INSERT INTO civicrm_contact (last_name, first_name, middle_name, nick_name, gender_id, birth_date, prefix_id, suffix_id, contact_type, IndividualID, sort_name, display_name)
-SELECT p.LastName, p.FirstName, if(p.MiddleName != '', p.MiddleName, NULL), if(p.GoesByName != '', p.GoesByName, NULL), gov.value, if(p.DateofBirth != '', DATE_FORMAT(STR_TO_DATE(p.DateOfBirth, '%m/%d/%Y'), '%Y-%m-%d'), NULL), pov.value, sov.value, 'Individual', p.IndividualID, CONCAT(p.LastName, ', ', p.FirstName), CONCAT(p.Title, ' ', p.FirstName, ' ', p.LastName, ' ', p.Suffix)
+INSERT INTO civicrm_contact (last_name, first_name, middle_name, nick_name, gender_id, birth_date, prefix_id, suffix_id, contact_type, IndividualID, sort_name, display_name, is_deceased)
+SELECT p.LastName, p.FirstName, if(p.MiddleName != '', p.MiddleName, NULL), if(p.GoesByName != '', p.GoesByName, NULL), gov.value, if(p.DateofBirth != '', DATE_FORMAT(STR_TO_DATE(p.DateOfBirth, '%m/%d/%Y'), '%Y-%m-%d'), NULL), pov.value, sov.value, 'Individual', p.IndividualID, CONCAT(p.LastName, ', ', p.FirstName), CONCAT(p.Title, ' ', p.FirstName, ' ', p.LastName, ' ', p.Suffix), if (p.MemberStatus == 'Deceased', 1, 0)
 FROM acop_data.People p
 LEFT JOIN civicrm_option_value gov ON gov.label = p.Gender AND gov.option_group_id = 3
 LEFT JOIN civicrm_option_value pov ON pov.label = if(p.Title = 'Miss', 'Miss.', if(p.Title = 'Pastor', 'Pastor.', p.Title)) AND pov.option_group_id = 6
@@ -552,13 +552,13 @@ FROM ind_data;
 DROP TABLE ind_data;
 
 CREATE TEMPORARY TABLE ind_data
-SELECT cc.id as entity_id, if(p.IndEducation != '', p.IndEducation, NULL) as education_completed_20, 0 as head_of_family_21, IF(p.IndStatus != '', p.IndStatus, NULL) as status_24, IF(p.IndMarriageRegistration != '', p.IndMarriageRegistration, NULL) as marriage_registration_25
+SELECT cc.id as entity_id, if(p.IndEducation != '', p.IndEducation, NULL) as education_completed_20, 0 as head_of_family_21, IF(p.IndStatus != '', p.IndStatus, NULL) as status_24, IF(p.IndMarriageRegistration != '', p.IndMarriageRegistration, NULL) as marriage_registration_25, if(p.MaritalStatus != '', p.MaritalStatus, NULL) as marital_status_43, IF(p.IndVitalStats_ != '', p.IndVitalStats_, NULL) as marriage_registration_number_44
 FROM acop_data.People p
 INNER JOIN civicrm_contact cc On cc.IndividualID = p.IndividualID
 WHERE p.IndividualNumber = 21;
 
-INSERT INTO civicrm_value_individual_ad_6 (entity_id, education_completed_20, head_of_family_21, status_24, marriage_registration_25) 
-SELECT entity_id, education_completed_20, head_of_family_21, status_24, marriage_registration_25
+INSERT INTO civicrm_value_individual_ad_6 (entity_id, education_completed_20, head_of_family_21, status_24, marriage_registration_25, marital_status_43, marriage_registration_number_44)
+SELECT entity_id, education_completed_20, head_of_family_21, status_24, marriage_registration_25, marital_status_43, marriage_registration_number_44
 FROM ind_data;
 
 DROP TABLE ind_data;
@@ -607,8 +607,8 @@ WHERE p.IndividualNumber = 21;
 DROP TABLE ind_emails;
                                                                                 
 /*Process other contacts*/
-INSERT INTO civicrm_contact (last_name, first_name, middle_name, nick_name, gender_id, birth_date, prefix_id, suffix_id, contact_type, IndividualID, sort_name, display_name)
-SELECT p.LastName, p.FirstName, if(p.MiddleName != '', p.MiddleName, NULL), if(p.GoesByName != '', p.GoesByName, NULL), gov.value, if(p.DateofBirth != '', DATE_FORMAT(STR_TO_DATE(p.DateOfBirth, '%m/%d/%Y'), '%Y-%m-%d'), NULL), pov.value, sov.value, 'Individual', p.IndividualID, CONCAT(p.LastName, ', ', p.FirstName), CONCAT(p.Title, ' ', p.FirstName, ' ', p.LastName, ' ', p.Suffix)
+INSERT INTO civicrm_contact (last_name, first_name, middle_name, nick_name, gender_id, birth_date, prefix_id, suffix_id, contact_type, IndividualID, sort_name, display_name, is_deceased)
+SELECT p.LastName, p.FirstName, if(p.MiddleName != '', p.MiddleName, NULL), if(p.GoesByName != '', p.GoesByName, NULL), gov.value, if(p.DateofBirth != '', DATE_FORMAT(STR_TO_DATE(p.DateOfBirth, '%m/%d/%Y'), '%Y-%m-%d'), NULL), pov.value, sov.value, 'Individual', p.IndividualID, CONCAT(p.LastName, ', ', p.FirstName), CONCAT(p.Title, ' ', p.FirstName, ' ', p.LastName, ' ', p.Suffix), if (p.MemberStatus == 'Deceased', 1, 0)
 FROM acop_data.People p
 LEFT JOIN civicrm_option_value gov ON gov.label = p.Gender AND gov.option_group_id = 3
 LEFT JOIN civicrm_option_value pov ON pov.label = if(p.Title = 'Miss', 'Miss.', if(p.Title = 'Pastor', 'Pastor.', p.Title)) AND pov.option_group_id = 6
@@ -628,13 +628,13 @@ FROM ind_data;
 DROP TABLE ind_data;
 
 CREATE TEMPORARY TABLE ind_data
-SELECT cc.id as entity_id, if(p.IndEducation != '', p.IndEducation, NULL) as education_completed_20, 0 as head_of_family_21, IF(p.IndStatus != '', p.IndStatus, NULL) as status_24, IF(p.IndMarriageRegistration != '', p.IndMarriageRegistration, NULL) as marriage_registration_25
+SELECT cc.id as entity_id, if(p.IndEducation != '', p.IndEducation, NULL) as education_completed_20, 0 as head_of_family_21, IF(p.IndStatus != '', p.IndStatus, NULL) as status_24, IF(p.IndMarriageRegistration != '', p.IndMarriageRegistration, NULL) as marriage_registration_25, if(p.MaritalStatus != '', p.MaritalStatus, NULL) as marital_status_43, IF(p.IndVitalStats_ != '', p.IndVitalStats_, NULL) as marriage_registration_number_44
 FROM acop_data.People p
 INNER JOIN civicrm_contact cc On cc.IndividualID = p.IndividualID
 WHERE p.IndividualNumber NOT IN (1,21,11);
 
-INSERT INTO civicrm_value_individual_ad_6 (entity_id, education_completed_20, head_of_family_21, status_24, marriage_registration_25) 
-SELECT entity_id, education_completed_20, head_of_family_21, status_24, marriage_registration_25
+INSERT INTO civicrm_value_individual_ad_6 (entity_id, education_completed_20, head_of_family_21, status_24, marriage_registration_25, marital_status_43, marriage_registration_number_44)
+SELECT entity_id, education_completed_20, head_of_family_21, status_24, marriage_registration_25, marital_status_43, marriage_registration_number_44
 FROM ind_data;
 
 DROP TABLE ind_data;
